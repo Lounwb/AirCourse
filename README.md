@@ -192,6 +192,10 @@ A: 请检查：
 
 本项目基于 [MIT License](LICENSE) 开源协议
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Lounwb/apple-timetable&type=date&legend=bottom-right)](https://www.star-history.com/#Lounwb/apple-timetable&type=date&legend=bottom-right)
+
 ---
 
 <div align="center">
