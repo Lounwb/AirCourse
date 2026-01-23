@@ -556,9 +556,6 @@ function validateInputs() {
 
 // 生成ICS文件头
 function generateICSHeader() {
-    const now = new Date();
-    const timestamp = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    
     return `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Course Schedule//Course to ICS//EN
@@ -569,14 +566,28 @@ X-WR-TIMEZONE:Asia/Shanghai
 `;
 }
 
+// 获取ICS格式的时间戳
+function getICSTimestamp() {
+    const now = new Date();
+    return now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
 // 生成课程事件
 function generateCourseEvent(course, timeSlot, schoolAddress, semesterStartDate, totalWeeks) {
-    const startDate = new Date(semesterStartDate);
+    let startDate = new Date(semesterStartDate);
+    
+    // 修正：确保startDate对齐到该周的周一
+    // getDay(): 0=周日, 1=周一, ..., 6=周六
+    const day = startDate.getDay();
+    // 计算当前日期距离周一的差值（周日视为上一周的最后一天，即差-6天；周一差0天；周二差-1天）
+    const diffToMonday = (day === 0 ? -6 : 1) - day;
+    startDate.setDate(startDate.getDate() + diffToMonday);
+
     const dayOfWeek = timeSlot.dayOfWeek; // 1=Monday, 7=Sunday
     const startWeek = timeSlot.startWeek;
     const endWeek = timeSlot.endWeek;
     
-    // 计算第一次上课的日期
+    // 计算第一次上课的日期 (基于周一的基础日期)
     const firstClassDate = new Date(startDate);
     const daysToAdd = (startWeek - 1) * 7 + (dayOfWeek - 1);
     firstClassDate.setDate(startDate.getDate() + daysToAdd);
@@ -623,6 +634,7 @@ function generateCourseEvent(course, timeSlot, schoolAddress, semesterStartDate,
     
     let event = `BEGIN:VEVENT
 UID:${eventId}
+DTSTAMP:${getICSTimestamp()}
 DTSTART:${startTime}
 DTEND:${endTime}
 SUMMARY:${summary}
