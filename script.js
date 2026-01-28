@@ -202,7 +202,8 @@ function addCourse() {
             endWeek: 16,
             dayOfWeek: 1,
             startClass: 1,
-            endClass: 2
+            endClass: 2,
+            weekType: 'all' // 'all': 每周, 'odd': 单周, 'even': 双周
         }]
     };
     
@@ -304,6 +305,15 @@ function generateTimeSlotsHTML(course) {
                         </select>
                     </div>
                 </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">开课周次</label>
+                    <select class="w-full px-2 py-1 border border-gray-300 rounded text-sm" 
+                            onchange="updateTimeSlot(${course.id}, ${timeSlot.id}, 'weekType', this.value)">
+                        <option value="all" ${timeSlot.weekType === 'all' || !timeSlot.weekType ? 'selected' : ''}>每周</option>
+                        <option value="odd" ${timeSlot.weekType === 'odd' ? 'selected' : ''}>单周</option>
+                        <option value="even" ${timeSlot.weekType === 'even' ? 'selected' : ''}>双周</option>
+                    </select>
+                </div>
             </div>
         </div>
     `).join('');
@@ -328,7 +338,8 @@ function addTimeSlot(courseId) {
             endWeek: 16,
             dayOfWeek: 1,
             startClass: 1,
-            endClass: 2
+            endClass: 2,
+            weekType: 'all' // 'all': 每周, 'odd': 单周, 'even': 双周
         };
         course.timeSlots.push(newTimeSlot);
         updateCoursesDisplay();
@@ -623,6 +634,9 @@ function generateCourseEvent(course, timeSlot, schoolAddress, semesterStartDate,
     const startTime = `${formatDateForICS(firstClassDate)}T${startClassTime.start.replace(':', '')}00`;
     const endTime = `${formatDateForICS(firstClassDate)}T${endClassTime.end.replace(':', '')}00`;
     
+    // 获取周次类型（默认每周）
+    const weekType = timeSlot.weekType || 'all';
+    
     // 计算重复次数
     const repeatCount = endWeek - startWeek;
     
@@ -640,8 +654,55 @@ DTEND:${endTime}
 SUMMARY:${summary}
 LOCATION:${location}
 DESCRIPTION:${description}
-RRULE:FREQ=WEEKLY;COUNT=${repeatCount + 1}
 `;
+    
+    // 根据周次类型生成RRULE和EXDATE
+    if (weekType === 'all') {
+        // 每周：使用简单的RRULE
+        event += `RRULE:FREQ=WEEKLY;COUNT=${repeatCount + 1}
+`;
+    } else {
+        // 单周或双周：需要排除不需要的周次
+        // 学期第一周是单周，所以：
+        // 单周：1, 3, 5, 7, 9, ... (奇数周)
+        // 双周：2, 4, 6, 8, 10, ... (偶数周)
+        
+        // 先使用RRULE生成所有周次的事件
+        event += `RRULE:FREQ=WEEKLY;COUNT=${repeatCount + 1}
+`;
+        
+        // 计算需要排除的日期
+        const excludeDates = [];
+        for (let week = startWeek; week <= endWeek; week++) {
+            const isOddWeek = (week % 2 === 1);
+            
+            // 如果是单周课程，排除双周
+            if (weekType === 'odd' && !isOddWeek) {
+                const excludeDate = new Date(startDate);
+                const daysToAdd = (week - 1) * 7 + (dayOfWeek - 1);
+                excludeDate.setDate(startDate.getDate() + daysToAdd);
+                excludeDates.push(excludeDate);
+            }
+            // 如果是双周课程，排除单周
+            else if (weekType === 'even' && isOddWeek) {
+                const excludeDate = new Date(startDate);
+                const daysToAdd = (week - 1) * 7 + (dayOfWeek - 1);
+                excludeDate.setDate(startDate.getDate() + daysToAdd);
+                excludeDates.push(excludeDate);
+            }
+        }
+        
+        // 添加EXDATE排除不需要的日期
+        if (excludeDates.length > 0) {
+            // 为每个日期创建单独的EXDATE行，提高兼容性
+            excludeDates.forEach(date => {
+                const dateStr = formatDateForICS(date);
+                const timeStr = startClassTime.start.replace(':', '') + '00';
+                event += `EXDATE:${dateStr}T${timeStr}
+`;
+            });
+        }
+    }
     
     // 添加提醒
     const reminders = [
@@ -1200,7 +1261,8 @@ async function callOpenAIAPI(apiKey, model, imageData) {
           "endWeek": 16,
           "dayOfWeek": 1,
           "startClass": 1,
-          "endClass": 2
+          "endClass": 2,
+          "weekType": "all"
         }
       ]
     }
@@ -1213,7 +1275,8 @@ async function callOpenAIAPI(apiKey, model, imageData) {
 3. 如果同一门课程在不同周次有不同安排，请为每个时间段创建单独的timeSlot
 4. 请仔细识别所有课程信息，包括课程名称、教师、地点、时间等
 5. 只返回JSON格式，不要包含其他文字
-6. 不要提取学期信息或课程时间配置，这些需要用户手动输入`;
+6. 不要提取学期信息或课程时间配置，这些需要用户手动输入
+7. weekType字段：如果课程标注了"单周"、"单"、"奇数周"等，设置为"odd"；如果标注了"双周"、"双"、"偶数周"等，设置为"even"；如果没有标注或标注了"每周"、"全周"等，设置为"all"（默认值）`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -1283,7 +1346,8 @@ async function callDeepSeekAPI(apiKey, model, imageData) {
           "endWeek": 16,
           "dayOfWeek": 1,
           "startClass": 1,
-          "endClass": 2
+          "endClass": 2,
+          "weekType": "all"
         }
       ]
     }
@@ -1296,7 +1360,8 @@ async function callDeepSeekAPI(apiKey, model, imageData) {
 3. 如果同一门课程在不同周次有不同安排，请为每个时间段创建单独的timeSlot
 4. 请仔细识别所有课程信息，包括课程名称、教师、地点、时间等
 5. 只返回JSON格式，不要包含其他文字
-6. 不要提取学期信息或课程时间配置，这些需要用户手动输入`;
+6. 不要提取学期信息或课程时间配置，这些需要用户手动输入
+7. weekType字段：如果课程标注了"单周"、"单"、"奇数周"等，设置为"odd"；如果标注了"双周"、"双"、"偶数周"等，设置为"even"；如果没有标注或标注了"每周"、"全周"等，设置为"all"（默认值）`;
 
     // 根据模型选择不同的API端点
     let apiUrl, requestBody;
@@ -1450,7 +1515,8 @@ async function callQwenAPIDirect(imageData) {
           "endWeek": 结束周数,
           "dayOfWeek": 星期几(1-7),
           "startClass": 开始节次,
-          "endClass": 结束节次
+          "endClass": 结束节次,
+          "weekType": "all"
         }
       ]
     }
@@ -1463,7 +1529,8 @@ async function callQwenAPIDirect(imageData) {
 3. 如果同一门课程在不同时间段上课，请在timeSlots数组中添加多个时间段
 4. 确保所有数字都是整数类型
 5. 如果某些信息无法识别，请用合理的默认值
-6. 不要提取学期信息或课程时间配置，这些需要用户手动输入`
+6. 不要提取学期信息或课程时间配置，这些需要用户手动输入
+7. weekType字段：如果课程标注了"单周"、"单"、"奇数周"等，设置为"odd"；如果标注了"双周"、"双"、"偶数周"等，设置为"even"；如果没有标注或标注了"每周"、"全周"等，设置为"all"（默认值）`
                 }
             ]
         }]
@@ -1718,6 +1785,17 @@ function parseAndFillData(data) {
                         if (dayOfWeek < 1) dayOfWeek = 1;
                         if (dayOfWeek > 7) dayOfWeek = 7;
                         
+                        // 解析周次类型
+                        let weekType = 'all'; // 默认每周
+                        if (timeSlotData.weekType) {
+                            const wt = timeSlotData.weekType.toLowerCase();
+                            if (wt === 'odd' || wt === '单周' || wt === 'single') {
+                                weekType = 'odd';
+                            } else if (wt === 'even' || wt === '双周' || wt === 'double') {
+                                weekType = 'even';
+                            }
+                        }
+                        
                         course.timeSlots.push({
                             id: Date.now() + Math.random(),
                             location: timeSlotData.location || '',
@@ -1725,7 +1803,8 @@ function parseAndFillData(data) {
                             endWeek: endWeek,
                             dayOfWeek: dayOfWeek,
                             startClass: startClass,
-                            endClass: endClass
+                            endClass: endClass,
+                            weekType: weekType
                         });
                     });
                 } else {
@@ -1737,7 +1816,8 @@ function parseAndFillData(data) {
                         endWeek: 16,
                         dayOfWeek: 1,
                         startClass: 1,
-                        endClass: 2
+                        endClass: 2,
+                        weekType: 'all'
                     });
                 }
                 
