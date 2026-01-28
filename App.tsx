@@ -3,7 +3,7 @@ import { AppState, Course, TimeSlot, Period } from './types';
 import { parseTimetableImage, GuestQuota } from './services/geminiService';
 import { classTimesToPeriods, searchUniversityCampuses, UniversityCampusSuggestion } from './services/universityService';
 import { supabase } from './services/supabaseClient';
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // --- i18n Translations ---
 
@@ -870,6 +870,7 @@ const App: React.FC = () => {
       </Modal>
 
       <Footer />
+      <SpeedInsights />
     </div>
   );
 };
