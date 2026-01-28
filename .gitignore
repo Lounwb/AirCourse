@@ -30,7 +30,9 @@ coverage
 .vercel
 
 # custom files
-.docs/*
-.scripts/*
+docs/*
+scripts/*
 
 .DS_Store
+**/.DS_Store
+.DS_Store?
