@@ -1,0 +1,38 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# Env files (keep secrets out of git)
+.env
+.env.*
+!.env.example
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
+# Coverage / test outputs
+coverage
+*.lcov
+
+# Vercel / build system
+.vercel
+
+# custom files
+docs/*
+scripts/*
+
+.DS_Store
+**/.DS_Store
+.DS_Store?

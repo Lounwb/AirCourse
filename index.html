@@ -1,510 +1,72 @@
+
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="课表转ICS">
-    <title>课表转ICS工具</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirCourse AI - Turn your schedule into sync</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
+            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: '#007AFF',
-                        'primary-light': '#E3F2FD',
-                        'primary-dark': '#0056CC',
-                        secondary: '#2196F3',
-                        'blue-apple': '#007AFF',
-                        'blue-light': '#F0F8FF',
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
                     },
-                    spacing: {
-                        'safe-top': 'env(safe-area-inset-top)',
-                        'safe-bottom': 'env(safe-area-inset-bottom)',
-                        'safe-left': 'env(safe-area-inset-left)',
-                        'safe-right': 'env(safe-area-inset-right)',
-                    }
-                }
-            }
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
         }
     </script>
     <style>
-        /* iOS安全区域适配 */
-        @supports (padding: max(0px)) {
-            .ios-safe {
-                padding-left: max(1rem, env(safe-area-inset-left));
-                padding-right: max(1rem, env(safe-area-inset-right));
-            }
-            .ios-safe-top {
-                padding-top: max(2rem, env(safe-area-inset-top));
-            }
-            .ios-safe-bottom {
-                padding-bottom: max(2rem, env(safe-area-inset-bottom));
-            }
+        body { font-family: 'Lexend', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        
-        /* iPhone X以上机型优化 */
-        @media screen and (max-width: 768px) {
-            .mobile-optimized {
-                padding-left: max(1rem, env(safe-area-inset-left));
-                padding-right: max(1rem, env(safe-area-inset-right));
-            }
-            .mobile-header {
-                padding-top: max(1rem, calc(env(safe-area-inset-top) + 1rem));
-            }
-            .mobile-footer {
-                padding-bottom: max(2rem, calc(env(safe-area-inset-bottom) + 2rem));
-            }
+        .dark .glass-panel {
+            background: rgba(16, 25, 34, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
-        /* 特定iPhone X系列设备优化 */
-        @media screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3),
-               screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2),
-               screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
-               screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
-               screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
-            .ios-safe {
-                padding-left: max(1rem, env(safe-area-inset-left));
-                padding-right: max(1rem, env(safe-area-inset-right));
-            }
+        @keyframes pulse-custom {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(19, 127, 236, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(19, 127, 236, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(19, 127, 236, 0); }
         }
-        
-        /* iPad优化 */
-        @media screen and (min-width: 768px) and (max-width: 1024px) {
-            .ipad-optimized {
-                max-width: 90%;
-                margin: 0 auto;
-            }
-            .ipad-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 2rem;
-            }
-            .ipad-full-width {
-                grid-column: 1 / -1;
-            }
-        }
-        
-        /* 触摸优化 */
-        @media (hover: none) and (pointer: coarse) {
-            .touch-target {
-                min-height: 44px;
-                min-width: 44px;
-            }
-            button, input, select, textarea {
-                font-size: 16px; /* 防止iOS缩放 */
-            }
-        }
-        
-        /* iOS输入框焦点优化 */
-        @media screen and (max-width: 768px) {
-            /* 输入框过渡动画优化 */
-            input, textarea, select {
-                transition: all 0.2s ease-in-out;
-            }
-            
-            /* 防止输入框切换时的视觉跳动 */
-            .form-container {
-                scroll-behavior: smooth;
-            }
-            
-            /* 防止iOS键盘弹出时的页面缩放 */
-            input:focus, textarea:focus, select:focus {
-                transform: translateZ(0);
-                -webkit-appearance: none;
-                appearance: none;
-            }
-        }
-        
-        /* 横屏优化 */
-        @media screen and (orientation: landscape) and (max-height: 500px) {
-            .landscape-compact {
-                padding-top: 1rem;
-                padding-bottom: 1rem;
-            }
-            .landscape-title {
-                font-size: 1.5rem;
-                margin-bottom: 1rem;
-            }
-        }
-        
-        /* 大学搜索下拉框样式 */
-        #universityDropdown {
-            z-index: 1000;
-        }
-        
-        #universityDropdown .highlight {
-            background-color: #fef3c7;
-            font-weight: 600;
-        }
-        
-        #universityDropdown div:hover {
-            background-color: #dbeafe;
-        }
-        
-        /* 键盘导航选中状态 */
-        #universityDropdown .keyboard-selected {
-            background-color: #3b82f6 !important;
-            color: white !important;
-        }
-        
-        #universityDropdown .keyboard-selected .text-gray-500 {
-            color: #e5e7eb !important;
-        }
-        
-        #universityDropdown .keyboard-selected .text-gray-700 {
-            color: white !important;
-        }
-        
-        /* GitHub Star 左上角折角标签样式 */
-        .github-corner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 9999;
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #007AFF 50%, transparent 50%);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .github-corner:hover {
-            background: linear-gradient(135deg, #0056CC 50%, transparent 50%);
-            transform: scale(1.1);
-        }
-        
-        .github-corner .github-icon {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            width: 24px;
-            height: 24px;
-            color: white;
-            transition: all 0.3s ease;
-        }
-        
-        .github-corner:hover .github-icon {
-            animation: wave 0.6s ease-in-out;
-        }
-        
-        @keyframes wave {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(-10deg); }
-            75% { transform: rotate(10deg); }
-        }
-        
-        .github-star-text {
-            position: absolute;
-            top: 42px;
-            left: 22px;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            transform: rotate(45deg);
-            white-space: nowrap;
-        }
-        
-        /* 移动端优化 */
-        @media (max-width: 768px) {
-            .github-corner {
-                width: 60px;
-                height: 60px;
-            }
-            
-            .github-corner .github-icon {
-                top: 8px;
-                left: 8px;
-                width: 20px;
-                height: 20px;
-            }
-            
-            .github-star-text {
-                top: 32px;
-                left: 16px;
-                font-size: 8px;
-            }
+        .ai-pulse {
+            animation: pulse-custom 2s infinite;
         }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-gradient-to-br from-blue-light to-white min-h-screen">
-    <!-- GitHub Star 左上角折角标签 -->
-    <a href="https://github.com/Lounwb/apple-timetable" target="_blank" rel="noopener noreferrer" class="github-corner" title="在GitHub上给我们点个Star ⭐">
-        <svg class="github-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-        </svg>
-        <!-- <span class="github-star-text">STAR</span> -->
-    </a>
-    <div class="container mx-auto mobile-optimized ipad-optimized ios-safe px-4 py-8 max-w-4xl ios-safe-top">
-        <!-- 页面标题 -->
-        <div class="text-center mb-8 mobile-header landscape-compact">
-            <h1 class="text-3xl md:text-4xl font-bold text-primary mb-2 landscape-title">课表转ICS工具</h1>
-            <p class="text-blue-600 text-sm md:text-base mb-4">将你的课表转换为ICS格式，轻松导入到苹果日历中</p>
-            
-            <!-- GitHub Star 提示按钮 - 确保可点击 -->
-            <div class="flex justify-center mb-4">
-                <a href="https://github.com/Lounwb/apple-timetable" target="_blank" rel="noopener noreferrer" 
-                   class="inline-flex items-center bg-gradient-to-r from-blue-500 to-primary text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 no-underline">
-                    <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                    </svg>
-                    <span class="text-sm font-semibold">觉得有用？给我们点个Star ⭐</span>
-                </a>
-            </div>
-            
-            <!-- GitHub 仓库链接 -->
-            <div class="flex justify-center space-x-4 text-sm">
-                <a href="https://github.com/Lounwb/apple-timetable" target="_blank" rel="noopener noreferrer" 
-                   class="inline-flex items-center text-blue-600 hover:text-primary transition-colors duration-200 font-medium no-underline">
-                    <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-                    </svg>
-                    GitHub 源码
-                </a>
-                <span class="text-gray-400">|</span>
-                <a href="https://github.com/Lounwb/apple-timetable/issues" target="_blank" rel="noopener noreferrer"
-                   class="inline-flex items-center text-blue-600 hover:text-primary transition-colors duration-200 font-medium no-underline">
-                    <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                    </svg>
-                    反馈问题
-                </a>
-            </div>
-        </div>
-
-        <!-- 主要内容区域 -->
-        <div class="space-y-8 ipad-grid">
-            <!-- AI图片识别功能 -->
-            <div class="bg-white rounded-lg shadow-lg border border-blue-100 p-6 ipad-full-width">
-                <h2 class="text-xl font-semibold text-primary mb-6 flex items-center">
-                    <span class="mr-2">🤖</span>AI智能识别
-                </h2>
-                <div class="space-y-6">
-                    <!-- 图片上传区域 -->
-                    <div>
-                        <label class="block text-sm font-medium text-blue-700 mb-3">上传课表图片</label>
-                        <div class="border-2 border-dashed border-blue-200 rounded-lg p-8 text-center hover:border-primary hover:bg-primary-light/20 transition-all duration-200 relative" id="dropZone">
-                            <input type="file" id="imageUpload" accept="image/*" class="hidden">
-                            <div id="uploadPlaceholder" class="space-y-3">
-                                <svg class="mx-auto h-16 w-16 text-blue-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                <div>
-                                    <p class="text-base text-blue-600 font-medium">点击或拖拽上传课表图片</p>
-                                    <p class="text-sm text-blue-400 mt-1">支持 JPG、PNG、GIF 格式，最大10MB</p>
-                                </div>
-                            </div>
-                            <div id="imagePreview" class="hidden">
-                                <img id="previewImg" class="max-w-full h-auto rounded-lg shadow-sm" alt="课表预览">
-                                <div class="mt-4 flex justify-center space-x-3">
-                                    <button type="button" id="analyzeImage" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors font-medium touch-target">
-                                        🔍 开始识别
-                                    </button>
-                                    <button type="button" id="removeImage" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors touch-target">
-                                        移除图片
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- AI识别状态 -->
-                    <div>
-                        <label class="block text-sm font-medium text-blue-700 mb-3">识别状态</label>
-                        <div id="aiStatus" class="bg-blue-50 rounded-lg p-6 min-h-[180px] flex items-center justify-center border border-blue-100">
-                            <div class="text-center text-blue-600">
-                                <svg class="mx-auto h-16 w-16 text-blue-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <p class="text-base font-medium">请上传课表图片开始AI识别</p>
-                                <p class="text-sm text-blue-400 mt-1">支持自动提取课程信息</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 学期基本信息 -->
-            <div class="bg-white rounded-lg shadow-lg border border-blue-100 p-6">
-                <h2 class="text-xl font-semibold text-primary mb-4">学期基本信息</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-blue-700 mb-2">选择学校</label>
-                        <div class="relative">
-                            <input type="text" id="universitySearch" class="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="输入学校名称搜索..." autocomplete="off">
-                            <div id="universityDropdown" class="absolute z-10 w-full bg-white border border-blue-200 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
-                                <!-- 搜索结果将在这里显示 -->
-                            </div>
-                        </div>
-                        
-                        <!-- 已选择的大学显示 -->
-                        <div id="selectedUniversity" class="mt-2 text-sm text-blue-600 hidden">
-                            <span class="font-medium">已选择：</span>
-                            <span id="selectedUniversityName"></span>
-                            <button type="button" id="clearUniversity" class="ml-2 text-red-500 hover:text-red-700">
-                                ✕ 清除
-                            </button>
-                        </div>
-                        
-                        <!-- 手动输入学校地址 -->
-                        <div id="manualAddressInput" class="mt-3">
-                            <label class="block text-sm font-medium text-blue-700 mb-2">
-                                学校地址
-                                <span class="text-xs text-gray-500">（如果未找到您的学校，请手动输入完整地址）</span>
-                            </label>
-                            <input type="text" id="schoolAddress" class="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="例如：北京大学燕园校区" value="">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-blue-700 mb-2">学期第一天</label>
-                        <input type="date" id="semesterStartDate" class="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-blue-700 mb-2">学期总周数</label>
-                        <input type="number" id="totalWeeks" class="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="例如：16" min="1" max="30">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-blue-700 mb-2">每节课时长（分钟）</label>
-                        <input type="number" id="classDuration" class="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="45" min="30" max="120" value="45">
-                    </div>
-                </div>
-            </div>
-
-            <!-- 课程时间配置 -->
-            <div class="bg-white rounded-lg shadow-lg border border-blue-100 p-6">
-                <h2 class="text-xl font-semibold text-primary mb-4">课程时间配置</h2>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-blue-700 mb-2">一天有几节课</label>
-                    <input type="number" id="classesPerDay" class="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="11" min="1" max="20" value="11">
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-blue-700 mb-2">大节间休息时间（分钟）</label>
-                    <input type="number" id="breakDuration" class="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" placeholder="15" min="0" max="60" value="15">
-                </div>
-                <div>
-                    <h3 class="text-lg font-medium text-primary mb-3">每节课开始时间</h3>
-                    <div id="classTimes" class="space-y-2">
-                        <!-- 动态生成的课程时间输入框 -->
-                    </div>
-                    <button type="button" id="addClassTime" class="mt-3 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors font-medium touch-target">
-                        ⏰ 添加课程时间
-                    </button>
-                </div>
-            </div>
-
-            <!-- 提醒设置 -->
-            <div class="bg-white rounded-lg shadow-lg border border-blue-100 p-6">
-                <h2 class="text-xl font-semibold text-primary mb-4">提醒设置</h2>
-                <div class="space-y-3">
-                    <div class="flex items-center">
-                        <input type="checkbox" id="reminder1" class="mr-3" checked>
-                        <label class="text-sm text-gray-700">课前1小时提醒</label>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" id="reminder2" class="mr-3" checked>
-                        <label class="text-sm text-gray-700">课前30分钟提醒</label>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" id="reminder3" class="mr-3" checked>
-                        <label class="text-sm text-gray-700">课前15分钟提醒</label>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" id="reminder4" class="mr-3" checked>
-                        <label class="text-sm text-gray-700">课前5分钟提醒</label>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" id="reminder5" class="mr-3">
-                        <label class="text-sm text-gray-700">课前1分钟提醒</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 课程信息 -->
-            <div class="bg-white rounded-lg shadow-lg border border-blue-100 p-6 ipad-full-width">
-                <h2 class="text-xl font-semibold text-primary mb-4">课程信息</h2>
-                <div id="coursesList" class="space-y-6">
-                    <!-- 动态生成的课程输入表单 -->
-                </div>
-                <button type="button" id="addCourse" class="mt-4 px-6 py-3 bg-secondary text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors font-medium touch-target">
-                    ➕ 添加课程
-                </button>
-            </div>
-
-            <!-- 生成和下载按钮 -->
-            <div class="bg-white rounded-lg shadow-lg border border-blue-100 p-6 ipad-full-width">
-                <h2 class="text-xl font-semibold text-primary mb-4 text-center">导出课表</h2>
-                <div class="space-y-4">
-                    <!-- 一键导入按钮 -->
-                    <div class="text-center">
-                        <button type="button" id="generateAndImportICS" class="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 text-lg font-medium transition-colors touch-target">
-                            <span class="apple-device-text hidden">📱 生成并导入到Apple日历</span>
-                            <span class="other-device-text">📅 生成ICS文件</span>
-                        </button>
-                        <p id="deviceHint" class="text-xs text-blue-500 mt-2 apple-device-text hidden">
-                            适用于 iPhone、iPad、Mac 设备
-                        </p>
-                        <div id="iosHint" class="text-xs text-orange-600 mt-2 p-2 bg-orange-50 rounded border-l-4 border-orange-300 hidden">
-                            <strong>📱 iOS用户提醒：</strong><br>
-                            点击后请在Safari下载管理器中查看文件，然后点击文件选择"用日历打开"
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-8 mt-16 mobile-footer ios-safe-bottom">
-        <div class="container mx-auto mobile-optimized px-4 max-w-4xl">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- 关于工具 -->
-                <div>
-                    <h3 class="text-lg font-semibold mb-3">关于工具</h3>
-                    <p class="text-gray-300 text-sm leading-relaxed">
-                        一个简单易用的课表转ICS工具，帮助你将课程表转换为日历格式，轻松导入到苹果日历中。
-                    </p>
-                </div>
-                
-                <!-- 功能特点 -->
-                <div>
-                    <h3 class="text-lg font-semibold mb-3">功能特点</h3>
-                    <ul class="text-gray-300 text-sm space-y-1">
-                        <li>• 支持多时间段课程</li>
-                        <li>• 灵活的时间配置</li>
-                        <li>• 多种提醒设置</li>
-                        <li>• 标准ICS格式</li>
-                    </ul>
-                </div>
-                
-                <!-- 使用说明 -->
-                <div>
-                    <h3 class="text-lg font-semibold mb-3">使用说明</h3>
-                    <ul class="text-gray-300 text-sm space-y-1">
-                        <li>• 填写学期基本信息</li>
-                        <li>• 配置课程时间</li>
-                        <li>• 添加课程和时间段</li>
-                        <li>• 生成并下载ICS文件</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <!-- 版权信息 -->
-            <div class="border-t border-gray-700 mt-8 pt-6 text-center">
-                <p class="text-gray-400 text-sm">
-                    © 2025 课表转ICS工具 | 使用 
-                    <a href="https://tailwindcss.com/" class="text-blue-400 hover:text-blue-300" target="_blank">Tailwind CSS</a> 
-                    构建 | 
-                    <a href="https://github.com" class="text-blue-400 hover:text-blue-300" target="_blank">开源项目</a>
-                </p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="universities-data.js"></script>
-    <script src="script.js"></script>
+<body class="bg-background-light dark:bg-background-dark text-[#0d141b] dark:text-slate-100 min-h-screen">
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>

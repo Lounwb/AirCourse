@@ -25,6 +25,78 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: '缺少图片数据' });
         }
         
+        // --- Supabase：每日限额统计（未登录用户限制 10 次/天） ---
+        // 说明：
+        // - 所有请求都会在 guest_daily_usage 中记录使用次数（便于观察数据）
+        // - 只有“未携带 Supabase access token”的请求才会被实际限流（返回 429）
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const quotaTable = process.env.SUPABASE_GUEST_QUOTA_TABLE || "guest_daily_usage";
+        const quotaSalt = process.env.GUEST_QUOTA_SALT || "default_salt_change_me";
+
+        const authHeader = req.headers.authorization || req.headers.Authorization;
+        const hasUserToken = typeof authHeader === "string" && authHeader.toLowerCase().startsWith("bearer ");
+
+        if (supabaseUrl && supabaseServiceKey) {
+          try {
+            const { createClient } = await import("@supabase/supabase-js");
+            const crypto = await import("crypto");
+            const supabase = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
+
+            // Vercel 常见来源：x-forwarded-for 可能是逗号分隔
+            const xff = req.headers["x-forwarded-for"];
+            const rawIp = (Array.isArray(xff) ? xff[0] : (xff || "")).split(",")[0].trim()
+              || req.socket?.remoteAddress
+              || "unknown";
+            const ipHash = crypto.createHash("sha256").update(`${rawIp}:${quotaSalt}`).digest("hex");
+
+            const today = new Date();
+            const y = today.getUTCFullYear();
+            const m = String(today.getUTCMonth() + 1).padStart(2, "0");
+            const d = String(today.getUTCDate()).padStart(2, "0");
+            const dayKey = `${y}-${m}-${d}`; // UTC 日期
+
+            const { data: row, error: readErr } = await supabase
+              .from(quotaTable)
+              .select("count")
+              .eq("day", dayKey)
+              .eq("ip_hash", ipHash)
+              .maybeSingle();
+
+            if (readErr) {
+              console.error("配额读取失败:", readErr.message);
+            }
+
+            const used = row?.count || 0;
+            const limit = 10;
+
+            // 仅对未登录用户做真正限流
+            if (!hasUserToken && used >= limit) {
+              res.setHeader("X-Guest-Limit", String(limit));
+              res.setHeader("X-Guest-Used", String(used));
+              return res.status(429).json({ error: "未登录用户今日免费次数已用完（10 次）" });
+            }
+
+            const next = used + 1;
+            const { error: upsertErr } = await supabase
+              .from(quotaTable)
+              .upsert(
+                { day: dayKey, ip_hash: ipHash, count: next, updated_at: new Date().toISOString() },
+                { onConflict: "day,ip_hash" }
+              );
+
+            if (upsertErr) {
+              console.error("配额写入失败:", upsertErr.message);
+            } else {
+              res.setHeader("X-Guest-Limit", String(limit));
+              res.setHeader("X-Guest-Used", String(next));
+            }
+          } catch (quotaErr) {
+            console.error("配额统计异常:", quotaErr);
+            // 不阻塞后续 AI 调用
+          }
+        }
+
         // 从环境变量获取API Key
         const apiKey = process.env.DASHSCOPE_API_KEY;
         if (!apiKey) {
