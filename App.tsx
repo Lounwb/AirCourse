@@ -3,6 +3,7 @@ import { AppState, Course, TimeSlot, Period } from './types';
 import { parseTimetableImage, GuestQuota } from './services/geminiService';
 import { classTimesToPeriods, searchUniversityCampuses, UniversityCampusSuggestion } from './services/universityService';
 import { supabase } from './services/supabaseClient';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // --- i18n Translations ---
 
