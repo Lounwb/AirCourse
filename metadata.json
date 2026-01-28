@@ -1,0 +1,8 @@
+
+{
+  "name": "AirCourse AI",
+  "description": "An intelligent timetable parser that converts photos of class schedules into downloadable .ICS calendar files using Gemini Vision models.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

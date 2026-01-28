@@ -1,209 +1,180 @@
 <div align="center">
-
-# 📅 课表转ICS工具
-
-<p>
-  <img src="https://img.shields.io/github/stars/lounwb/apple-timetable?style=social" alt="GitHub Stars">
-  <img src="https://img.shields.io/github/forks/lounwb/apple-timetable?style=social" alt="GitHub Forks">
-  <img src="https://img.shields.io/github/license/lounwb/apple-timetable" alt="License">
-</p>
-
-**一个现代化的网页工具，轻松将课表转换为ICS格式并导入到Apple日历中**
-
-[🚀 立即使用](https://lounwb.github.io/apple-timetable) | [📖 使用指南](#使用方法) | [🐛 问题反馈](https://github.com/lounwb/apple-timetable/issues)
-
+  <img src="./favicon.svg" width="96" alt="AirCourse AI Logo" />
+  <h2>AirCourse AI · Timetable to ICS</h2>
+  <p>Upload your timetable screenshot · Export ICS for Apple / Google Calendar</p>
+  <p>
+    <img src="https://img.shields.io/github/stars/lounwb/apple-timetable?style=social" alt="GitHub Stars" />
+    <img src="https://img.shields.io/github/forks/lounwb/apple-timetable?style=social" alt="GitHub Forks" />
+    <img src="https://img.shields.io/github/license/lounwb/apple-timetable" alt="License" />
+    <a href="./README_zh.md">
+      <img src="https://img.shields.io/badge/lang-中文简体-blue?logo=google-translate" alt="Chinese README" />
+    </a>
+  </p>
 </div>
 
 ---
 
-## ✨ 为什么选择我们？
+## ✨ Overview
 
-🎯 **专为中国大学生设计** - 内置20+知名大学的课程时间配置，一键选择自动填充  
-🤖 **AI智能识别** - 上传课表图片，AI自动提取课程信息，告别手动输入  
-📱 **Apple生态优化** - 完美适配iPhone/iPad/Mac，支持一键导入日历  
-🎨 **现代化设计** - 蓝白配色界面，响应式布局，支持移动端和平板  
-⚡ **即开即用** - 无需注册登录，打开网页即可使用  
-🔒 **安全可靠** - 数据处理全程在浏览器本地完成，保护隐私安全
+**AirCourse AI** is a web tool optimized for Chinese university students. It helps you:
 
-## 🎥 功能演示
+- Upload a timetable screenshot and let an **Alibaba DashScope (Qwen) vision model** extract course data  
+- Auto‑fill **class time slots + campus address** based on your university and campus  
+- Support **odd / even weeks**, multiple time slots per course, and complex schedules  
+- Export standard **`.ics` calendar files** that work with:
+  - Apple Calendar (iPhone / iPad / Mac)
+  - Google Calendar
+  - Any other calendar app that supports ICS
 
-<div align="center">
-  <img src="display.gif" alt="课表转ICS工具功能演示" width="800">
-  <p><em>完整功能演示：从AI识别到一键导入Apple日历</em></p>
-</div>
+Live demo: `https://apple-timetable.vercel.app`
 
-### ✨ 演示亮点
-- 🤖 **AI智能识别** - 上传课表图片，自动提取课程信息
-- 🏫 **大学选择** - 支持知名大学自动填充和手动输入
-- ⌨️ **键盘导航** - 支持方向键选择学校，回车确认
-- ⚡ **一键生成** - 智能检测设备，Apple用户可直接导入日历
-- 📱 **移动适配** - 完美支持iPhone、iPad等移动设备
+---
 
-## 🚀 核心功能
+## 🎯 Features
 
-### 📚 智能大学识别
-- **20+知名大学数据库** - 涵盖985/211重点大学
-- **智能搜索** - 输入学校简称即可快速匹配，支持键盘导航
-- **自动填充** - 选择学校后自动填充地址和课程时间配置
-- **全国覆盖** - 支持北京、上海、广东、江苏等主要省市大学
+- **AI‑powered timetable OCR**
+  - Upload images (JPG/PNG, etc.), and the DashScope Qwen model recognizes:
+    - course name, instructor, location, weekday, start class, end class
+  - Clear error state when recognition fails.
 
-### 🤖 AI图片识别
-- **一键上传** - 支持拖拽上传课表图片
-- **智能解析** - 使用先进的AI模型识别课程信息  
-- **格式支持** - 支持JPG、PNG、GIF等常见图片格式
-- **准确率高** - 专门针对中文课表优化的识别算法
+- **University presets (China‑focused)**
+  - Local file `data/universities.js` stores many Chinese universities:
+    - Campus address
+    - Daily periods (start / end time per period)
+  - Fuzzy search with **highlighted matches** in the dropdown.
+  - When selecting from the dropdown:
+    - Automatically fills campus address and `periods` (time slots)
+    - Locks the address input to read‑only to avoid accidental edits
+  - When typing school name manually:
+    - Address input is fully editable
+    - Clearing the school name will also clear the address
 
-### 📱 Apple设备优化
-- **一键导入** - iPhone/iPad用户可直接导入到日历应用
-- **刘海屏适配** - 完美支持iPhone X以上机型
-- **iPad布局** - 针对平板设备优化的界面布局
-- **响应式设计** - 自适应不同屏幕尺寸
+- **Course editing UX**
+  - Each course can have **multiple time slots** (different weeks / weekdays / rooms).
+  - For each slot:
+    - **Start period / end period** each use a **single compact select**  
+      (no extra “snap to period” dropdown).
+    - When start period changes, end period **auto‑defaults to the next period**  
+      (e.g. start at period 2 → end at period 3 by default).
+    - Repeatedly changing the start period always keeps the default as “one period later”
+      to represent a 2‑period class by default.
 
-### ⏰ 灵活时间配置
-- **多时间段支持** - 同一门课可设置不同周次的多个时间段
-- **自定义提醒** - 支持1小时、30分钟、15分钟、5分钟、1分钟提醒
-- **标准格式** - 生成标准ICS格式，兼容各大日历应用
-- **智能重复** - 自动生成周期性课程安排
+- **Weekly timetable preview & ICS export**
+  - Switch between weeks, with **Odd / Even** badges.
+  - One‑click export of `.ics` file.
 
-## 📖 使用方法
+- **Auth & quota**
+  - **Supabase Auth** with email magic link:
+    - Click “Sign in”, enter your email and receive a magic link.
+    - After clicking the link you’ll be logged in; the header shows your email.
+  - **Guest users: 10 free AI calls per day**:
+    - All calls are recorded in Supabase table `guest_daily_usage`.
+    - If a non‑logged‑in user exceeds 10 calls in a day:
+      - API returns HTTP 429
+      - UI shows “Daily free quota used up, please sign in.”
+    - Logged‑in users are currently **not limited** by the 10‑call cap (still tracked).
 
-### 🎯 三种使用方式
+---
 
-#### 方式一：AI智能识别（推荐）
-1. **选择学校** - 在搜索框输入学校名称，可用方向键选择
-2. **上传图片** - 拖拽或点击上传课表截图
-3. **AI识别** - 点击"开始识别"，AI自动提取课程信息
-4. **检查调整** - 确认识别结果，手动调整错误信息
-5. **生成导入** - 点击"生成并导入Apple日历"完成
+## 🧱 Tech Stack
 
-#### 方式二：手动录入
-1. **基本信息** - 选择学校或手动输入地址、学期开始日期、总周数
-2. **课程时间** - 设置每天课程数量和时间安排
-3. **添加课程** - 逐个添加课程名称、教师、上课地点和时间
-4. **设置提醒** - 选择课前提醒时间
-5. **生成文件** - 导出ICS格式日历文件
+- Frontend: **React 19 + Vite + TypeScript**
+- UI: **Tailwind CSS**, responsive layout, dark mode support
+- AI: **Alibaba DashScope / Qwen** compatible API (called from serverless, API key never exposed to the browser)
+- Auth & data: **Supabase**
+  - Auth: email magic link
+  - `guest_daily_usage`: per‑IP daily quota tracking for guests
 
-#### 方式三：混合模式
-先使用AI识别快速导入大部分信息，再手动调整和补充细节信息。
+---
 
-### 📱 导入Apple日历
+## 🚀 Development
 
-**iPhone/iPad用户：**
-- 生成ICS后点击"📱 导入到Apple日历"按钮即可一键导入
+### 1. Prerequisites
 
-**Mac用户：**
-- 下载ICS文件后双击即可导入到日历应用
+- Node.js 18+ (18 or 20 recommended)
 
-**手动导入：**
-1. 下载生成的ICS文件
-2. 发送到iOS设备或Mac
-3. 双击文件选择"添加到日历"
-4. 选择目标日历并确认导入
+### 2. Install dependencies
 
-## 📊 支持的大学
-
-<details>
-<summary>点击查看已收录的大学列表（20+所）</summary>
-
-### 985工程大学
-- 北京大学、清华大学、复旦大学、上海交通大学
-- 浙江大学、南京大学、中山大学、华中科技大学
-- 四川大学、西安交通大学、哈尔滨工业大学、中国科学技术大学
-- 电子科技大学、中国科学院大学
-
-### 211工程大学
-- 北京理工大学、北京航空航天大学、大连理工大学
-- 东南大学、华南理工大学、同济大学
-
-### 港澳高校
-- 香港中文大学（主校区）、香港中文大学（深圳校区）
-
-> 💡 如果你的学校不在列表中，选择"其他学校"手动输入即可
-
-</details>
-
-## 🎯 使用示例
-
-### 复杂课程安排示例
-对于同一门课程的多个时间段：
-```
-数据结构与算法：
-├── 1-5周，星期一第3-4节 (立人楼B417)
-├── 7-10周，星期一第3-4节 (立人楼B417)  
-├── 1-4周，星期四第3-4节 (立人楼B417)
-└── 6-10周，星期四第3-4节 (立人楼B417)
+```bash
+npm install
 ```
 
-**传统方式**：需要添加4门相同课程  
-**本工具**：添加1门课程，设置4个时间段即可！ ✨
+### 3. Environment variables
 
-## 💡 使用技巧
+Create `.env.local` in the project root:
 
-### 🔍 搜索技巧
-- 输入学校简称即可搜索，如"北大"、"清华"、"复旦"
-- 支持键盘导航：用↑↓方向键选择，回车确认
-- 找不到学校时选择"其他学校"手动输入
+```env
+# Frontend API base URL (in dev you can point to your deployed Vercel URL,
+# or leave empty and run `vercel dev` to host /api locally)
+VITE_API_BASE_URL=https://apple-timetable.vercel.app
 
-### 📷 图片识别技巧
-- 确保课表图片清晰，文字可读
-- 建议使用截图而非拍照，避免角度倾斜
-- 支持多种课表格式，包括教务系统导出的表格
+# Supabase client config (Anon key is public)
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-### 📅 时间设置技巧
-- 多时间段课程：同一门课不同周次可设置多个时间段
-- 提醒设置：建议设置30分钟和5分钟双重提醒
-- 地点信息：详细填写教学楼和教室号，方便查找
+# DashScope / Qwen API key (serverless only, never exposed to client)
+DASHSCOPE_API_KEY=your_dashscope_key
 
-## ❓ 常见问题
+# Supabase server config (Service Role key has full DB rights, use only on server)
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-<details>
-<summary>Q: 为什么AI识别功能无法使用？</summary>
+# Salt used to hash IP addresses for quota tracking
+GUEST_QUOTA_SALT=some_random_long_string
 
-A: AI识别功能需要API服务支持。如果遇到问题，请尝试刷新页面或使用手动录入方式。
-</details>
+# GitHub repo URL used by the navigation bar GitHub button
+VITE_GITHUB_URL=https://github.com/Lounwb/apple-timetable
 
-<details>
-<summary>Q: 生成的ICS文件无法导入？</summary>
+# Optional: redirect URL for Supabase magic link
+VITE_SUPABASE_REDIRECT_URL=https://apple-timetable.vercel.app
+```
 
-A: 请确保：
-1. 使用最新版本的日历应用
-2. 文件完整下载（检查文件大小）
-3. 尝试用其他方式发送文件到设备
-</details>
+### 4. Supabase schema
 
-<details>
-<summary>Q: 课程时间显示不正确？</summary>
+Create the quota table in Supabase:
 
-A: 请检查：
-1. 学期开始日期是否正确
-2. 课程时间配置是否与学校一致
-3. 周次范围是否准确
-</details>
+```sql
+create table if not exists guest_daily_usage (
+  day text not null,
+  ip_hash text not null,
+  count int not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key(day, ip_hash)
+);
+```
 
-## 🤝 反馈建议
+> Tip: you may also add an index on `day` for faster analytics.
 
-如果你在使用过程中遇到问题或有改进建议：
+### 5. Start the dev server
 
-- 📝 [提交问题反馈](https://github.com/lounwb/apple-timetable/issues)
-- 💡 [功能建议](https://github.com/lounwb/apple-timetable/discussions)
-- ⭐ [给项目点个Star](https://github.com/lounwb/apple-timetable)
+Frontend only (API points to deployed Vercel endpoint):
 
-## 📄 许可证
+```bash
+npm run dev
+```
 
-本项目基于 [MIT License](LICENSE) 开源协议
+Or run both frontend and serverless functions locally with Vercel:
 
-## Star History
+```bash
+vercel dev
+```
+
+## 🤝 Contributing
+
+- Use GitHub Issues for:
+  - Bug reports (recognition errors, export problems, UI issues, etc.)
+  - Feature requests (more universities, more export formats, more reminder options)
+- If you have a full timetable configuration for your own university/campus, PRs updating
+  `data/universities.js` are very welcome.
+
+## 📄 License
+
+This project is open‑sourced under the **MIT License**.  
+You are free to use, modify, and distribute it under the terms of the license.
+
+
+## ⭐ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Lounwb/apple-timetable&type=date&legend=bottom-right)](https://www.star-history.com/#Lounwb/apple-timetable&type=date&legend=bottom-right)
 
 ---
-
-<div align="center">
-
-**⭐ 如果这个工具对你有帮助，请给个Star支持一下！**
-
-Made with ❤️ for Chinese university students
-
-[🚀 立即使用](https://lounwb.github.io/apple-timetable)
-
-</div>
