@@ -175,6 +175,6 @@ You are free to use, modify, and distribute it under the terms of the license.
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Lounwb/apple-timetable&type=date&legend=bottom-right)](https://www.star-history.com/#Lounwb/apple-timetable&type=date&legend=bottom-right)
+[![Star History Chart](https://api.star-history.com/svg?repos=Lounwb/AirCourse&type=date&legend=bottom-right)](https://www.star-history.com/#Lounwb/AirCourse&type=date&legend=bottom-right)
 
 ---
